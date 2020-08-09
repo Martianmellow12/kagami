@@ -230,12 +230,15 @@ date_and_time = DateAndTime(root, BAHNS_MEDIUM, 800)
 div1 = Divider(root, 700)
 weather_temp = TextItem(root, "[BLANK]", CONSOLAS_MEDIUM, 800)
 weather_type = TextItem(root, "[BLANK]", CONSOLAS_MEDIUM, 800)
+raincoat_rec = TextItem(root, "[!] RAINCOAT RECOMMENDED", CONSOLAS_MEDIUM, 800)
+
 greeting.grid(row=0, column=0, sticky="w")          # Greeting text
 div1.grid(row=1, column=0, sticky="w")              # Divider between the greeting and date/time
 date_and_time.grid(row=2, column=0, sticky="w")     # Date and time text
 root.grid_rowconfigure(3, minsize=75)               # Pad the space between the date/time and weather
 weather_temp.grid(row=4, column=0, sticky="w")      # Weather temperature text
 weather_type.grid(row=5, column=0, sticky="w")      # Weather type text
+raincoat_rec.grid(row=6, column=0, sticky="w")      # Raincoat recommendation
 
 
 
@@ -251,6 +254,9 @@ def activate(window):
     window.after(600, lambda:date_and_time.hide(False))
     window.after(700, lambda:weather_temp.hide(False))
     window.after(800, lambda:weather_type.hide(False))
+    if weatherlib.get_raincoat_rec(weatherlib.CITY_RALEIGH):
+        window.after(800, lambda:raincoat_rec.hide(False))
+        window.after(1000, lambda:raincoat_rec.blink(True))
 
 
 def deactivate(window):
@@ -259,6 +265,7 @@ def deactivate(window):
     window.after(100, lambda:date_and_time.hide(True))
     window.after(200, lambda:weather_temp.hide(True))
     window.after(300, lambda:weather_type.hide(True))
+    window.after(400, lambda:raincoat_rec.hide(True))
 
 
 #############

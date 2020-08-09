@@ -7,6 +7,7 @@
 ###########################################
 
 import requests
+import time
 
 # API Key - REMOVE BEFORE COMMITS!!!
 API_KEY = ""
@@ -90,11 +91,16 @@ OWM_CONDITION_CODES = {
 #########################
 # Weather API Functions #
 #########################
-CITY_RALEIGH = "4487042"    # My home city :D
+CITY_RALEIGH = ("35.769375", "-78.674016")    # My home city's latitude and longitude :D
 
 # Make an API Call for a specific city
-def __apicall__(api_key, city_id):
+def __apicallOLD__(api_key, city_id):
     URL = f"https://api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}"
+    return requests.get(URL).json()
+
+# Make an API call for a given longitude/latitude pair
+def __apicall__(api_key, latlong_tuple):
+    URL = f"https://api.openweathermap.org/data/2.5/onecall?lat={latlong_tuple[0]}&lon={latlong_tuple[1]}&exclude=daily,minutely&appid={api_key}"
     return requests.get(URL).json()
 
 # Convert Kelvin to degrees Fahrenheit
@@ -102,27 +108,43 @@ def __ktof__(kelvin_temp):
     return ((kelvin_temp - 273.15)*9)/5 + 32
 
 # Get a string describing the temperature
-def get_tempstr(city_id):
+def get_tempstr(latlong_tuple):
     global API_KEY
 
     # Make the API call
-    results = __apicall__(API_KEY, city_id)
+    results = __apicall__(API_KEY, latlong_tuple)
 
     # Make sure the call was successful
-    if results["cod"] != 200: return "<ERR: Unable to get temperature data>"
-    else: return f"{int(__ktof__(results['main']['temp']))}°F (feels like {int(__ktof__(results['main']['feels_like']))}°F)"
+    if "cod" in results.keys() and results["cod"] != 200: return "<ERR: Unable to get temperature data>"
+    else: return f"{int(__ktof__(results['current']['temp']))}°F (feels like {int(__ktof__(results['current']['feels_like']))}°F)"
 
 # Get a string describing the weather weather type
-def get_typestr(city_id):
+def get_typestr(latlong_tuple):
     global API_KEY
 
     # Make the API call
-    results = __apicall__(API_KEY, city_id)
+    results = __apicall__(API_KEY, latlong_tuple)
 
     # Make sure the call was successful
-    if results["cod"] != 200: return "<ERR: Unable to get weather data>"
+    if "cod" in results.keys() and results["cod"] != 200: return "<ERR: Unable to get weather data>"
     else:
         resultstr = "/"
-        for i in results["weather"]:
+        for i in results["current"]["weather"]:
             resultstr += OWM_CONDITION_CODES[i["id"]]+"/"
         return resultstr
+
+# Check if a raincoat is recommended (uses next 12 hours)
+def get_raincoat_rec(latlong_tuple):
+    global API_KEY
+
+    # Make the API call
+    results = __apicall__(API_KEY, latlong_tuple)
+
+    # Extract the results
+    if "cod" in results.keys() and results["cod"] != 200: return None
+    else:
+        recommended = False
+        for i in results["hourly"]:
+            for j in i["weather"]:
+                if j["id"]==500 and (time.time()+43200)>i["dt"]: recommended = True
+        return recommended
